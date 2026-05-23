@@ -5,9 +5,7 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // If someone wants to sell a token, they create a dutch auction using the linear dutch auction factory.
 // In a single transaction, the factory creates the auction and the token is transferred from the user to the auction.
@@ -153,7 +151,7 @@ contract LinearDutchAuction {
 
         token.safeTransfer(msg.sender, token.balanceOf(address(this))); // Would it be best practice to check that msg.sender transfer first the ETH instead of us transfering first?
 
-        (bool ok, ) = seller.call{value: price}(""); // I still think we should protect if the duration elapsed and there were no offer, that not anyone could send value 0 and take the token
+        (bool ok,) = seller.call{value: price}(""); // I still think we should protect if the duration elapsed and there were no offer, that not anyone could send value 0 and take the token
         if (!ok) revert SendEtherToSellerFailed();
 
         if (msg.value > price) {

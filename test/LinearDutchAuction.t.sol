@@ -19,7 +19,16 @@ contract LinearDutchAuctionTest is Test {
     LinearDutchAuctionFactory auctionFactory;
     TokenForSale token;
 
-    event AuctionCreated(address indexed auction, address indexed token, uint256 startingPriceEther, uint256 startTime, uint256 duration, uint256 amount, address seller);
+    event AuctionCreated(
+        address indexed auction,
+        address indexed token,
+        uint256 startingPriceEther,
+        uint256 startTime,
+        uint256 duration,
+        uint256 amount,
+        address seller
+    );
+
     function setUp() public {
         token = new TokenForSale();
         auctionFactory = new LinearDutchAuctionFactory();
@@ -36,7 +45,6 @@ contract LinearDutchAuctionTest is Test {
         assertEq(LinearDutchAuction(payable(auction)).startTime(), block.timestamp);
         assertEq(LinearDutchAuction(payable(auction)).durationSeconds(), uint256(1 days));
         assertEq(LinearDutchAuction(payable(auction)).seller(), address(this));
-
     }
 
     function test_event_auctionCreated() public {
@@ -62,15 +70,17 @@ contract LinearDutchAuctionTest is Test {
 
     function test_auctionCreated_invalid_token() public {
         vm.expectRevert();
-        address auction = auctionFactory.createAuction(ERC20(address(0)), 1 ether, block.timestamp, 1 days, 100e18, address(this));
+        address auction =
+            auctionFactory.createAuction(ERC20(address(0)), 1 ether, block.timestamp, 1 days, 100e18, address(this));
     }
 
     function test_invalid_start_time() public {
         token.approve(address(auctionFactory), 100e18);
         vm.expectRevert();
-        address auction = auctionFactory.createAuction(token, 1 ether, block.timestamp - 1, 1 days, 100e18, address(this));
+        address auction =
+            auctionFactory.createAuction(token, 1 ether, block.timestamp - 1, 1 days, 100e18, address(this));
     }
-    
+
     function test_invalid_start_price() public {
         token.approve(address(auctionFactory), 100e18);
         vm.expectRevert();
@@ -88,33 +98,38 @@ contract LinearDutchAuctionTest is Test {
         address auction = auctionFactory.createAuction(token, 1 ether, block.timestamp, 1 days, 100e18, address(this));
         assertEq(LinearDutchAuction(payable(auction)).currentPrice(), 1 ether);
     }
-    
+
     function test_currentPrice_after_auction_ended() public {
         token.approve(address(auctionFactory), 100e18);
         address auction = auctionFactory.createAuction(token, 1 ether, block.timestamp, 1 days, 100e18, address(this));
         vm.warp(block.timestamp + 1 days);
         assertEq(LinearDutchAuction(payable(auction)).currentPrice(), 0);
     }
+
     function test_3_percent_progress() public {
         token.approve(address(auctionFactory), 100e18);
-        address auction = auctionFactory.createAuction(token, 1 ether, block.timestamp, 100 seconds, 100e18, address(this));
+        address auction =
+            auctionFactory.createAuction(token, 1 ether, block.timestamp, 100 seconds, 100e18, address(this));
         skip(3 seconds);
         assertEq(LinearDutchAuction(payable(auction)).currentPrice(), 1 ether * 97 / 100);
     }
 
     function test_7_percent_progress() public {
         token.approve(address(auctionFactory), 100e18);
-        address auction = auctionFactory.createAuction(token, 1 ether, block.timestamp, 100 seconds, 100e18, address(this));
+        address auction =
+            auctionFactory.createAuction(token, 1 ether, block.timestamp, 100 seconds, 100e18, address(this));
         skip(7 seconds);
         assertEq(LinearDutchAuction(payable(auction)).currentPrice(), 1 ether * 93 / 100);
     }
 
     function test_not_started() public {
         token.approve(address(auctionFactory), 100e18);
-        address auction = auctionFactory.createAuction(token, 1 ether, block.timestamp + 100 seconds, 100 seconds, 100e18, address(this));
+        address auction = auctionFactory.createAuction(
+            token, 1 ether, block.timestamp + 100 seconds, 100 seconds, 100e18, address(this)
+        );
         vm.expectRevert();
         LinearDutchAuction(payable(auction)).currentPrice();
-    } 
+    }
 
     function test_buy_tokens() public {
         address seller = makeAddr("seller");
@@ -148,16 +163,17 @@ contract LinearDutchAuctionTest is Test {
         token.approve(address(auctionFactory), 100e18);
         address auction = auctionFactory.createAuction(token, 1 ether, block.timestamp, 100 seconds, 100e18, seller);
         vm.deal(address(this), 0.99 ether);
-        (bool ok, ) = auction.call{value: 0.99 ether}("");
+        (bool ok,) = auction.call{value: 0.99 ether}("");
         assertEq(ok, false);
     }
 
     function test_buy_tokens_seller_revert() public {
         NoFallback seller = new NoFallback();
         token.approve(address(auctionFactory), 100e18);
-        address auction = auctionFactory.createAuction(token, 1 ether, block.timestamp, 100 seconds, 100e18, address(seller));
+        address auction =
+            auctionFactory.createAuction(token, 1 ether, block.timestamp, 100 seconds, 100e18, address(seller));
         vm.deal(address(this), 1 ether);
-        (bool ok, ) = auction.call{value: 1 ether}("");
+        (bool ok,) = auction.call{value: 1 ether}("");
         assertEq(ok, false);
     }
 
